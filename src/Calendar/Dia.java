@@ -18,6 +18,7 @@ import javax.swing.border.TitledBorder;
  *
  * @author martin
  */
+
 public class Dia extends JScrollPane {
 
     private Date fecha;
