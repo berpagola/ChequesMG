@@ -10,13 +10,23 @@ import Visual.TablaCheques;
 import conexiones.DBconection;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import org.apache.poi.hssf.usermodel.HSSFCell;
+import org.apache.poi.hssf.usermodel.HSSFRichTextString;
+import org.apache.poi.hssf.usermodel.HSSFRow;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 
 /**
  *
@@ -35,7 +45,7 @@ public class Calendario extends javax.swing.JPanel {
         initComponents();
         Date fecha = new Date();
         Mes.setMonth(fecha.getMonth());
-        Anio.setYear(fecha.getYear()+1900);
+        Anio.setYear(fecha.getYear() + 1900);
         llenarMes();
         Mes.addPropertyChangeListener(new PropertyChangeListener() {
             @Override
@@ -55,7 +65,7 @@ public class Calendario extends javax.swing.JPanel {
         Date fecha = new Date();
         fecha.setDate(1);
         fecha.setMonth(Mes.getMonth());
-        fecha.setYear(Anio.getYear()-1900);
+        fecha.setYear(Anio.getYear() - 1900);
         System.out.print(fecha.getYear());
         monthclass.setMes(fecha);
         return fecha;
@@ -64,44 +74,44 @@ public class Calendario extends javax.swing.JPanel {
     public void llenarMes() {
         try {
             String s;
-            total=0;
+            total = 0;
             double num;
-            Date fechaIni=setMesAnio();
-            Date fechaFin=(Date)fechaIni.clone();
-            fechaFin=Feriados.sumarMes(fechaFin);
+            Date fechaIni = setMesAnio();
+            Date fechaFin = (Date) fechaIni.clone();
+            fechaFin = Feriados.sumarMes(fechaFin);
             con = new DBconection();
             ResultSet rs1, rs2;
             Statement st;
             st = con.conectar().createStatement();
-            rs2=st.executeQuery("SELECT * FROM `Feriados` WHERE Feriado>='"+TablaCheques.convFecha(fechaIni)+"' AND Feriado<'"+TablaCheques.convFecha(fechaFin)+"'");
-            while (rs2.next()){
+            rs2 = st.executeQuery("SELECT * FROM `Feriados` WHERE Feriado>='" + TablaCheques.convFecha(fechaIni) + "' AND Feriado<'" + TablaCheques.convFecha(fechaFin) + "'");
+            while (rs2.next()) {
                 monthclass.agregarFeriado(rs2.getString("Feriado"));
             }
-            rs1=st.executeQuery("SELECT * FROM `Cheques` WHERE FechaPago>='"+TablaCheques.convFecha(fechaIni)+"' AND FechaPago<'"+TablaCheques.convFecha(fechaFin)+"'");
-            while (rs1.next()){
-                s= new String("$");
-                s= s.concat(rs1.getString("Importe"));
-                num= Double.parseDouble(s.substring(1));
-                s=s.concat(" ");
-                s=s.concat(rs1.getString("Beneficiario"));
+            rs1 = st.executeQuery("SELECT * FROM `Cheques` WHERE FechaPago>='" + TablaCheques.convFecha(fechaIni) + "' AND FechaPago<'" + TablaCheques.convFecha(fechaFin) + "'");
+            while (rs1.next()) {
+                s = new String("$");
+                s = s.concat(rs1.getString("Importe"));
+                num = Double.parseDouble(s.substring(1));
+                s = s.concat(" ");
+                s = s.concat(rs1.getString("Beneficiario"));
                 monthclass.agregarEvento(s, num, rs1.getString("FechaPago"), Integer.parseInt(rs1.getString("Pagado")));
-                total+=num;
+                total += num;
             }
-            total=monthclass.getTotalMes();
+            total = monthclass.getTotalMes();
             ImpMes.setText(TablaCheques.moneyFormat(total));
             Impsem1.setText(TablaCheques.moneyFormat(monthclass.getTotalSemana(0)));
             Impsem2.setText(TablaCheques.moneyFormat(monthclass.getTotalSemana(1)));
             Impsem3.setText(TablaCheques.moneyFormat(monthclass.getTotalSemana(2)));
             Impsem4.setText(TablaCheques.moneyFormat(monthclass.getTotalSemana(3)));
             Impsem5.setText(TablaCheques.moneyFormat(monthclass.getTotalSemana(4)));
-            totalp=monthclass.getTotalPagadoMes();
+            totalp = monthclass.getTotalPagadoMes();
             ImpMesp.setText(TablaCheques.moneyFormat(totalp));
             Impsemp1.setText(TablaCheques.moneyFormat(monthclass.getTotalPagadoSemana(0)));
             Impsemp2.setText(TablaCheques.moneyFormat(monthclass.getTotalPagadoSemana(1)));
             Impsemp3.setText(TablaCheques.moneyFormat(monthclass.getTotalPagadoSemana(2)));
             Impsemp4.setText(TablaCheques.moneyFormat(monthclass.getTotalPagadoSemana(3)));
             Impsemp5.setText(TablaCheques.moneyFormat(monthclass.getTotalPagadoSemana(4)));
-            ImpTotalMes.setText(TablaCheques.moneyFormat(totalp+total));
+            ImpTotalMes.setText(TablaCheques.moneyFormat(totalp + total));
         } catch (SQLException ex) {
             Logger.getLogger(Calendario.class.getName()).log(Level.SEVERE, null, ex);
             JOptionPane.showMessageDialog(null, "Error al conectarse con la Base de Datos. Intente establecer la conexion o contacte con el administrador");
@@ -124,6 +134,7 @@ public class Calendario extends javax.swing.JPanel {
         jLabel2 = new javax.swing.JLabel();
         Anio = new com.toedter.calendar.JYearChooser();
         Mes = new com.toedter.calendar.JMonthChooser();
+        GenerarPlanilla = new javax.swing.JButton();
         monthclass = new Calendar.Mes();
         jPanel2 = new javax.swing.JPanel();
         jLabel3 = new javax.swing.JLabel();
@@ -165,6 +176,13 @@ public class Calendario extends javax.swing.JPanel {
 
         jLabel2.setText("Seleccionar Año");
 
+        GenerarPlanilla.setText("Generar Planilla de Excel");
+        GenerarPlanilla.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                GenerarPlanillaActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -178,17 +196,22 @@ public class Calendario extends javax.swing.JPanel {
                 .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(Anio, javax.swing.GroupLayout.PREFERRED_SIZE, 55, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(GenerarPlanilla)
+                .addGap(83, 83, 83))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+            .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(Mes, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel2, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(Anio, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                        .addComponent(GenerarPlanilla)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(Mes, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(Anio, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
 
@@ -377,18 +400,16 @@ public class Calendario extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(monthclass, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(6, 6, 6)
-                                .addComponent(jLabel15)
-                                .addGap(18, 18, 18)
-                                .addComponent(ImpTotalMes, javax.swing.GroupLayout.PREFERRED_SIZE, 225, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(0, 0, Short.MAX_VALUE))
-                            .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                        .addGap(6, 6, 6)
+                        .addComponent(jLabel15)
+                        .addGap(18, 18, 18)
+                        .addComponent(ImpTotalMes, javax.swing.GroupLayout.PREFERRED_SIZE, 225, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(monthclass, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
@@ -411,9 +432,66 @@ public class Calendario extends javax.swing.JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    private void GenerarPlanillaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_GenerarPlanillaActionPerformed
+
+        JFileChooser file = new JFileChooser();
+        int dir = file.showSaveDialog(this);
+        String name;
+        if (dir == JFileChooser.APPROVE_OPTION) {
+            name = file.getSelectedFile().getAbsolutePath();
+            if (name.endsWith(".xls")) {
+                name = name.substring(0, name.length() - 4);
+            }
+            if (name == null || name.equals("")) {
+                JOptionPane.showMessageDialog(null, "Debe ingresar un nombre para el archivo de la planilla");
+            } else {
+                boolean ok = false;
+                FileInputStream test;
+                try {
+                    test = new FileInputStream(name + ".xls");
+                    int seleccion = JOptionPane.showOptionDialog(
+                            this, // Componente padre
+                            "El archivo con el nombre " + name + " ya existe, ¿Desea sobreescribirlo?", //Mensaje
+                            "Advertencia", // Título
+                            JOptionPane.YES_NO_CANCEL_OPTION,
+                            JOptionPane.QUESTION_MESSAGE,
+                            null, // null para icono por defecto.
+                            new Object[]{"Si", "No"},// null para YES, NO y CANCEL
+                            "Si");
+                    if (seleccion != -1) {
+                        if ((seleccion + 1) == 1) {
+                            ok = true;
+                        }
+                    }
+                } catch (FileNotFoundException ex) {
+                    ok = true;
+                }
+                if (ok) {
+                    Dia[][] aux = new Dia[5][5];
+                    double[][] excel = new double[5][5];
+                    aux = monthclass.getDias();
+                    for (int i = 0; i < 5; i++) {
+                        System.out.println();
+                        for (int j = 0; j < 5; j++) {
+                            if (aux[j][i].isVisible() == true) {
+                                excel[i][j] = aux[j][i].getTotal();
+                            } else {
+                                excel[i][j] = -1;
+                            }
+                        }
+                    }
+                    crearExcel(excel,name);
+                }
+            }
+        }
+
+
+    }//GEN-LAST:event_GenerarPlanillaActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private com.toedter.calendar.JYearChooser Anio;
+    private javax.swing.JButton GenerarPlanilla;
     private javax.swing.JLabel ImpMes;
     private javax.swing.JLabel ImpMesp;
     private javax.swing.JLabel ImpTotalMes;
@@ -452,4 +530,43 @@ public class Calendario extends javax.swing.JPanel {
     private javax.swing.JSeparator jSeparator4;
     private Calendar.Mes monthclass;
     // End of variables declaration//GEN-END:variables
+
+    private void crearExcel(double[][] excel, String name) {
+        HSSFWorkbook libro = new HSSFWorkbook();
+        HSSFSheet hoja = libro.createSheet();
+        HSSFRow fila;
+        HSSFCell celda;
+        fila = hoja.createRow(2);
+        celda = fila.createCell(3);
+        HSSFRichTextString texto = new HSSFRichTextString("prueba");
+        celda.setCellValue(texto);
+        celda = fila.createCell(4);
+        celda.setCellValue("prueba2");
+        
+        /* for (int i = 0; i < modelo.getColumnCount(); i++) {
+            celda = fila.createCell(i);
+            HSSFRichTextString texto = new HSSFRichTextString((String) (modelo.getColumnName(i)));
+            celda.setCellValue(texto);
+        }
+        for (int i = 0; i < modelo.getRowCount(); i++) {
+            fila = hoja.createRow(i + 1);
+            for (int k = 0; k < modelo.getColumnCount(); k++) {
+                celda = fila.createCell(k);
+                HSSFRichTextString texto = new HSSFRichTextString((String) (modelo.getValueAt(i, k)));
+                celda.setCellValue(texto);
+            }
+        }*/
+
+        FileOutputStream elFichero;
+        try {
+            elFichero = new FileOutputStream(name + ".xls");
+            libro.write(elFichero);
+            elFichero.close();
+            JOptionPane.showMessageDialog(null, "Se genero la planilla correctamente");
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(null, "Error al crear la planilla de Excel. Recuerde que el nombre del archivo no puede contener ninguno de los siguientes caracteres: \\ / : * ? \"< > | Intentelo nuevamente y si el problema persiste contacte con el administrador.");
+            System.out.println(ex);
+            System.exit(0);
+        }
+    }
 }

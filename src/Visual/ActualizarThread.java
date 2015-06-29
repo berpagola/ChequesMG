@@ -204,7 +204,11 @@ public class ActualizarThread extends Thread {
             JOptionPane.showMessageDialog(null, "Error al cargar la planilla de Excel. contacte con el administrador");
             System.out.println(ex.toString());
             System.exit(0);
-        }   
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(null, "Error al cargar la planilla de Excel. contacte con el administrador "+ex.toString());
+            System.out.println(ex.toString());
+            System.exit(0);
+        }  
     }
     
     

@@ -304,13 +304,13 @@ public class AgregarCheque extends javax.swing.JFrame {
                 con.desconectar();
                 return 0;
             } else {
-                //JOptionPane.showMessageDialog(null, "El cheque ya existe");
+                JOptionPane.showMessageDialog(null, "El cheque "+ cheque+" ya existe");
                 con.desconectar();
                 return 1;
             }
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(null, "Error al conectarse con la Base de Datos. Intente establecer la conexion o contacte con el administrador");
-            System.out.println(ex);
+            System.out.println(ex + " "+ beneficiario + " "+ beneficiario.length());
             System.exit(0);
             return 2;
         }

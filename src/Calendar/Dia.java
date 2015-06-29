@@ -14,6 +14,7 @@ import javax.swing.JList;
 import javax.swing.JScrollPane;
 import javax.swing.border.TitledBorder;
 
+
 /**
  *
  * @author martin
@@ -125,6 +126,7 @@ public class Dia extends JScrollPane {
         TitledBorder b = (TitledBorder) this.getBorder();
         TitledBorder borde = (TitledBorder) b.getBorder();
         borde.setTitle("Total $"+String.valueOf(total));
+        
     }
 
     public Date getFecha() {

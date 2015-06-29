@@ -27,6 +27,8 @@ public class Mes extends JPanel {
     public static final int VIERNES = 5;
     public static final int SABADO = 6;
 
+    public int excel[][] = new int[5][5];
+    
     private Dia dias[][];
     private Date mes;
     private double total;
@@ -44,6 +46,7 @@ public class Mes extends JPanel {
             for (int j = 0; j < 5; j++) {
                 dias[j][i] = new Dia();
                 this.add(dias[j][i]);
+                excel[i][j]=0;
             }
         }
     }
@@ -56,6 +59,7 @@ public class Mes extends JPanel {
             for (int j = 0; j < 5; j++) {
                 dias[j][i].limpiarEventos();
                 dias[j][i].setVisible(true);
+                excel[i][j]=0;
                 dias[j][i].setFeriado(false);
             }
         }
@@ -64,6 +68,7 @@ public class Mes extends JPanel {
         if (mes.getDay() != DOMINGO && mes.getDay() != SABADO) {
             for (int i = 0; i < mes.getDay() - LUNES; i++) {
                 dias[i][0].setVisible(false);
+                excel[i][0]=-1;
                 num++;
             }
         } else {
@@ -91,6 +96,7 @@ public class Mes extends JPanel {
         num = 25 - num;
         for (int j = 5 - num; j < 5; j++) {
             dias[j][4].setVisible(false);
+            excel[j][4]=-1;
         }
     }
 
@@ -192,5 +198,8 @@ public class Mes extends JPanel {
         tot= tot/1000;
         return tot;
     }
-
+    
+    public Dia[][] getDias(){
+        return dias;
+    }
 }
